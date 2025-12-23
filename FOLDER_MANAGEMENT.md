@@ -7,7 +7,7 @@ If you accidentally create nested folders with duplicate names (e.g., `folder/fo
 ### Method 1: Using Git Commands
 ```bash
 # Move files from nested folder to parent
-git mv nested_folder/nested_folder/file.txt nested_folder/
+git mv nested_folder/nested_folder/day2_notes.md nested_folder/
 
 # Remove the empty nested folder
 git rm -r nested_folder/nested_folder/
