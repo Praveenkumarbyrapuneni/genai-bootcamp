@@ -1,3 +1,28 @@
+## 🚀 Featured Project: Insurance Risk Analysis using Vertex AI
+
+**Description**  
+Built a Generative AI prototype using Google Vertex AI Studio and Gemini models
+to analyze unstructured insurance notes and generate structured underwriting
+risk summaries.
+
+**What it does**
+- Extracts key risk factors from unstructured text
+- Identifies underwriting questions and red flags
+- Produces structured, decision-ready summaries
+
+**Tech Stack**
+- Google Vertex AI Studio
+- Gemini (multimodal GenAI)
+- Prompt Engineering
+- Cloud Run (prototype deployment)
+
+**Status**
+- ✅ Working prototype
+- 🔜 RAG integration planned
+
+📂 Project directory: `vertex-ai-insurance-risk-analyzer/`
+
+
 # GenAI Bootcamp 
 
 This repository documents my structured 6-week learning journey in **Generative AI and Large Language Models (LLMs)**.
