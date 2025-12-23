@@ -7,7 +7,7 @@
 - Common prompt engineering mistakes
 
 ## Course Completed
-- Google Cloud: Prompt Engineering Guide
+- Prompt Engineering Guide (Google Cloud)
 
 ## Key Takeaways
 - Better prompts = better outputs

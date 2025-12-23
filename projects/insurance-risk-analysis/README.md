@@ -1,4 +1,3 @@
-
 # Insurance Risk Analysis using Vertex AI
 
 ## Overview
