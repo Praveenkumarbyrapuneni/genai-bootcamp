@@ -56,8 +56,10 @@ git commit -m "Fix: Remove nested folder structure"
    # Bad: might create nested folders
    cd my_folder && mkdir my_folder
    
-   # Good: check first
-   cd my_folder && ls
+   # Good: check first, then create in correct location
+   cd my_folder && ls  # Verify you're in the right place
+   # If you need a new folder, create it with a different name
+   mkdir new_folder_name
    ```
 
 ## Common Scenarios
