@@ -1,0 +1,5 @@
+Retrieval-Augmented Generation (RAG) is a method that helps LLMs answer questions using external documents.
+First, we split documents into small chunks. Then we convert each chunk into embeddings (numbers).
+We store embeddings in a vector index (like FAISS). When the user asks a question, we embed the question
+and retrieve the most similar chunks using vector search. Finally, we send the retrieved chunks + the question
+to the LLM to generate an answer grounded in the documents.
