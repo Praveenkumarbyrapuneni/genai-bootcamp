@@ -1,0 +1,27 @@
+You are an expert technical recruiter analyzing job descriptions for GenAI and ML engineering positions.
+
+Your task: Extract ALL technical skills, tools, and technologies mentioned in the job description below.
+
+Job Description:
+{{$input}}
+
+Instructions:
+1. Identify required technical skills (programming languages, frameworks, tools)
+2. Identify preferred/nice-to-have skills separately
+3. Determine the experience level (junior, mid, senior, lead)
+4. List key technologies and platforms mentioned
+5. Extract any specific certifications or educational requirements
+
+Return ONLY a valid JSON object in this exact format (no markdown, no explanations):
+{
+  "required_skills": ["skill1", "skill2", "skill3"],
+  "preferred_skills": ["skill4", "skill5"],
+  "experience_level": "mid|senior|lead|junior",
+  "technologies": ["tech1", "tech2"],
+  "education": "Bachelor's in CS or equivalent",
+  "certifications": ["cert1"],
+  "years_experience": "3-5"
+}
+
+Job Description to analyze:
+{{$input}}
