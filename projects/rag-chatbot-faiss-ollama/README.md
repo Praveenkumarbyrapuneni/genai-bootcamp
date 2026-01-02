@@ -133,6 +133,13 @@ http://localhost:8501
 
 ---
 
+## Demo
+
+![RAG Chatbot Demo](screenshot.png)
+<img width="1470" height="845" alt="image" src="https://github.com/user-attachments/assets/c4da8738-ddb1-4454-b12a-f5ef49284526" />
+<img width="1470" height="835" alt="image" src="https://github.com/user-attachments/assets/6c7acf76-6f4b-48f5-a848-457d50509912" />
+
+
 ## 👤 Author
 
 **Praveen Kumar Byrapuneni**  
