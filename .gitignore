@@ -1,0 +1,42 @@
+# Environment variables (NEVER commit these!)
+.env
+.env.local
+.env.production
+.env*.local
+frontend/.env.local
+
+# Python virtual environment
+venv/
+env/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Node modules (frontend)
+node_modules/
+frontend/node_modules/
+.next/
+frontend/.next/
+
+# Local JSON data
+career_memory.json
+
+# Generated files
+*.pdf
+CareerPath_AI_Documentation.pdf
