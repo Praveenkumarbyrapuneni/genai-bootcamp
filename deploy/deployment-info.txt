@@ -1,0 +1,20 @@
+CareerPath AI Deployment Info
+=============================
+Deployed on: Sat Jan  3 15:54:08 EST 2026
+
+Backend (Azure Container Apps):
+  URL: https://careerpath-api.thankfulsea-42148813.eastus.azurecontainerapps.io
+  API Docs: https://careerpath-api.thankfulsea-42148813.eastus.azurecontainerapps.io/docs
+  Resource: careerpath-api
+  
+Frontend (Azure Static Web Apps):
+  URL: https://icy-grass-0516c410f.6.azurestaticapps.net
+  Resource: careerpath-frontend
+
+Azure Resources:
+  Resource Group: careerpath-rg
+  Container Registry: careerpathacr73131
+  Container Environment: careerpath-env
+  
+Don't forget to add this URL to Supabase redirect URLs:
+  https://icy-grass-0516c410f.6.azurestaticapps.net

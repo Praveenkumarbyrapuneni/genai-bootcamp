@@ -5,9 +5,10 @@ FastAPI Backend for CareerPath AI
 Connects the Next.js frontend with the Python AI agents.
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from typing import Optional
 import sys
 import os
 
@@ -17,6 +18,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from src.kernel_config import create_kernel
 from src.agents.career_advisor import CareerAdvisorAgent
 from src.database.cosmos_manager import CareerDataManager
+from src.database.supabase_tracker import get_tracker
 
 app = FastAPI(
     title="CareerPath AI API",
@@ -27,7 +29,7 @@ app = FastAPI(
 # Enable CORS for Next.js frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3001"],
+    allow_origins=["http://localhost:3000", "http://localhost:3001", "*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -36,9 +38,12 @@ app.add_middleware(
 
 class AnalysisRequest(BaseModel):
     user_id: str
+    user_email: Optional[str] = None  # Added for tracking
     target_role: str
     current_skills: list[str]
     timeframe_months: int = 6
+    timeframe_display: Optional[str] = None  # e.g., "1 day", "6 months", "2 years"
+    resume_text: Optional[str] = None
 
 
 class AnalysisResponse(BaseModel):
@@ -64,15 +69,28 @@ async def analyze_career(request: AnalysisRequest):
     Run comprehensive career analysis using AI agents.
     """
     try:
+        # Log the search to Supabase
+        tracker = get_tracker()
+        tracker.log_search(
+            user_id=request.user_id,
+            user_email=request.user_email,
+            target_role=request.target_role,
+            current_skills=request.current_skills,
+            timeframe=request.timeframe_display or f"{request.timeframe_months} months",
+            resume_uploaded=bool(request.resume_text)
+        )
+        
         # Initialize the AI system
         kernel = create_kernel()
         advisor = CareerAdvisorAgent(kernel)
         
-        # Run analysis
+        # Run analysis with timeframe display
         results = await advisor.comprehensive_career_analysis(
             target_role=request.target_role,
             current_skills=request.current_skills,
-            timeframe_months=request.timeframe_months
+            timeframe_months=request.timeframe_months,
+            timeframe_display=request.timeframe_display or f"{request.timeframe_months} months",
+            resume_text=request.resume_text or None
         )
         
         # Save to database
@@ -94,7 +112,97 @@ async def analyze_career(request: AnalysisRequest):
         )
         
     except Exception as e:
+        print(f"Analysis error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/parse-resume")
+async def parse_resume(file: UploadFile = File(...)):
+    """
+    Parse uploaded resume and extract text.
+    """
+    try:
+        content = await file.read()
+        
+        # Handle different file types
+        filename = (file.filename or "unknown.txt").lower()
+        
+        if filename.endswith('.txt'):
+            text = content.decode('utf-8')
+        elif filename.endswith('.pdf'):
+            # Try to extract text from PDF
+            try:
+                import PyPDF2  # type: ignore
+                import io
+                pdf_reader = PyPDF2.PdfReader(io.BytesIO(content))
+                text = ""
+                for page in pdf_reader.pages:
+                    text += page.extract_text() + "\n"
+            except ImportError:
+                text = "[PDF parsing requires PyPDF2. Please upload a .txt file or paste your resume text.]"
+        elif filename.endswith('.docx'):
+            try:
+                import docx  # type: ignore
+                import io
+                doc = docx.Document(io.BytesIO(content))
+                text = "\n".join([para.text for para in doc.paragraphs])
+            except ImportError:
+                text = "[DOCX parsing requires python-docx. Please upload a .txt file or paste your resume text.]"
+        else:
+            text = content.decode('utf-8', errors='ignore')
+        
+        # Extract skills from resume text
+        extracted_skills = extract_skills_from_resume(text)
+        
+        return {
+            "text": text, 
+            "filename": file.filename,
+            "extracted_skills": extracted_skills
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error parsing resume: {str(e)}")
+
+
+def extract_skills_from_resume(text: str) -> list[str]:
+    """
+    Extract skills from resume text using keyword matching.
+    """
+    # Common skills to look for
+    all_skills = [
+        # Programming Languages
+        "Python", "Java", "JavaScript", "TypeScript", "C++", "C#", "Go", "Rust", "Ruby", "PHP", "Swift", "Kotlin", "Scala", "R",
+        # Web Development
+        "React", "Angular", "Vue", "Node.js", "Express", "Django", "Flask", "FastAPI", "Spring", "HTML", "CSS", "REST API", "GraphQL",
+        # Data & ML
+        "SQL", "MySQL", "PostgreSQL", "MongoDB", "Redis", "Elasticsearch",
+        "Machine Learning", "Deep Learning", "TensorFlow", "PyTorch", "Scikit-learn", "Pandas", "NumPy", "Keras",
+        "Data Analysis", "Data Science", "Data Visualization", "Tableau", "Power BI", "Excel", "Statistics",
+        "NLP", "Computer Vision", "Neural Networks",
+        # AI/LLM
+        "LLM", "LLMs", "Large Language Models", "GPT", "OpenAI", "Azure OpenAI", "Prompt Engineering", 
+        "RAG", "Retrieval Augmented Generation", "Vector Databases", "LangChain", "Semantic Kernel", "Fine-tuning",
+        "Hugging Face", "Transformers",
+        # Cloud & DevOps
+        "AWS", "Azure", "GCP", "Google Cloud", "Docker", "Kubernetes", "CI/CD", "Jenkins", "GitHub Actions",
+        "Terraform", "Ansible", "Linux", "DevOps", "MLOps",
+        # Other
+        "Git", "Agile", "Scrum", "System Design", "Microservices", "API Development",
+        "ETL", "Data Cleaning", "A/B Testing", "Business Intelligence", "Reporting",
+        "Data Structures", "Algorithms", "Problem Solving",
+    ]
+    
+    text_lower = text.lower()
+    found_skills = []
+    
+    for skill in all_skills:
+        # Check if skill exists in text (case insensitive)
+        if skill.lower() in text_lower:
+            # Avoid duplicates
+            if skill not in found_skills:
+                found_skills.append(skill)
+    
+    return found_skills
 
 
 @app.get("/api/history/{user_id}")
@@ -106,6 +214,51 @@ async def get_history(user_id: str):
         db_manager = CareerDataManager()
         history = db_manager.get_user_history(user_id)
         return {"history": history}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# Add new endpoints for analytics
+@app.get("/api/analytics/searches")
+async def get_all_searches(limit: int = 100):
+    """Get all user searches (admin endpoint)."""
+    try:
+        tracker = get_tracker()
+        searches = tracker.get_all_searches(limit)
+        return {"searches": searches}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/analytics/popular-roles")
+async def get_popular_roles(limit: int = 10):
+    """Get most popular searched roles."""
+    try:
+        tracker = get_tracker()
+        roles = tracker.get_popular_roles(limit)
+        return {"popular_roles": roles}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/analytics/summary")
+async def get_analytics_summary():
+    """Get analytics summary."""
+    try:
+        tracker = get_tracker()
+        summary = tracker.get_analytics_summary()
+        return summary
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/user/{user_id}/searches")
+async def get_user_searches(user_id: str, limit: int = 50):
+    """Get search history for a specific user."""
+    try:
+        tracker = get_tracker()
+        searches = tracker.get_user_searches(user_id, limit)
+        return {"searches": searches}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

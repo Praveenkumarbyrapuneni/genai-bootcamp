@@ -5,26 +5,37 @@
 [![Semantic Kernel](https://img.shields.io/badge/Semantic%20Kernel-1.39-purple.svg)](https://github.com/microsoft/semantic-kernel)
 [![Azure OpenAI](https://img.shields.io/badge/Azure%20OpenAI-GPT--4-green.svg)](https://azure.microsoft.com/en-us/products/ai-services/openai-service)
 [![Supabase](https://img.shields.io/badge/Supabase-Auth-orange.svg)](https://supabase.com)
+[![Docker](https://img.shields.io/badge/Docker-Containerized-blue.svg)](https://docker.com)
+[![Azure Container Apps](https://img.shields.io/badge/Azure-Container%20Apps-0078D4.svg)](https://azure.microsoft.com/en-us/products/container-apps)
+[![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen.svg)](https://icy-grass-0516c410f.6.azurestaticapps.net)
 
 An intelligent, AI-powered career advisory platform that uses **multiple specialized AI agents** to provide comprehensive career guidance, skill gap analysis, market research, and personalized job application strategies.
 
-![CareerPath AI Banner](https://via.placeholder.com/1200x400/6366F1/FFFFFF?text=CareerPath+AI+-+Your+AI+Career+Strategist)
+## 🌐 Live Demo
+
+| Service | URL |
+|---------|-----|
+| **🚀 Live Application** | [https://icy-grass-0516c410f.6.azurestaticapps.net](https://icy-grass-0516c410f.6.azurestaticapps.net) |
+| **🔧 Backend API** | [https://careerpath-api.thankfulsea-42148813.eastus.azurecontainerapps.io](https://careerpath-api.thankfulsea-42148813.eastus.azurecontainerapps.io) |
+| **📚 API Documentation** | [https://careerpath-api.thankfulsea-42148813.eastus.azurecontainerapps.io/docs](https://careerpath-api.thankfulsea-42148813.eastus.azurecontainerapps.io/docs) |
 
 ---
 
 ## 📋 Table of Contents
 
 - [Overview](#-overview)
+- [Live Demo](#-live-demo)
 - [Features](#-features)
 - [Architecture](#-architecture)
 - [Tech Stack](#-tech-stack)
 - [Multi-Agent System](#-multi-agent-system)
 - [Project Structure](#-project-structure)
 - [Installation](#-installation)
+- [Deployment](#-deployment)
 - [Configuration](#-configuration)
 - [Usage](#-usage)
 - [API Endpoints](#-api-endpoints)
-- [Screenshots](#-screenshots)
+- [User Analytics](#-user-analytics)
 - [Future Enhancements](#-future-enhancements)
 - [Contributing](#-contributing)
 - [License](#-license)
@@ -130,6 +141,7 @@ An intelligent, AI-powered career advisory platform that uses **multiple special
 | **Pydantic** | 2.11 | Data validation |
 | **Azure Cosmos DB** | 4.5.1 | NoSQL database |
 | **Supabase** | Latest | Authentication |
+| **Docker** | 28.x | Containerization |
 
 ### Frontend
 | Technology | Version | Purpose |
@@ -140,9 +152,12 @@ An intelligent, AI-powered career advisory platform that uses **multiple special
 | **Tailwind CSS** | 4.x | Styling |
 | **Supabase Auth UI** | 0.4.7 | Auth components |
 
-### Infrastructure
+### Infrastructure & Deployment
 | Service | Purpose |
 |---------|---------|
+| **Azure Container Apps** | Backend API hosting (containerized) |
+| **Azure Container Registry** | Docker image storage |
+| **Azure Static Web Apps** | Frontend hosting |
 | **Azure OpenAI Service** | AI model hosting |
 | **Azure Cosmos DB** | Data persistence |
 | **Supabase** | Authentication & user management |
@@ -206,6 +221,13 @@ Expertise: ["Resume optimization", "Interview prep", "Application timing", "Comp
 careerpath-ai/
 ├── 📁 api/
 │   └── main.py                 # FastAPI backend server
+├── 📁 deploy/                  # 🆕 Deployment scripts
+│   ├── deploy-container-apps.sh # One-command Azure deployment
+│   ├── deploy.sh               # Infrastructure setup
+│   ├── push-backend.sh         # Backend deployment
+│   ├── push-frontend.sh        # Frontend deployment
+│   ├── set-env-backend.sh      # Environment variables
+│   └── README.md               # Deployment guide
 ├── 📁 frontend/
 │   ├── 📁 src/
 │   │   ├── 📁 app/
@@ -219,6 +241,7 @@ careerpath-ai/
 │   │       └── supabase.ts     # Supabase client
 │   ├── package.json
 │   ├── next.config.ts
+│   ├── staticwebapp.config.json # Azure Static Web Apps config
 │   └── tailwind.config.ts
 ├── 📁 src/
 │   ├── kernel_config.py        # Semantic Kernel setup
@@ -248,7 +271,7 @@ careerpath-ai/
 │   └── 📁 skills_analyzer/
 │       └── extract_skills.txt  # Prompt templates
 ├── 📁 dashboard/
-│   └── app.py                  # Streamlit dashboard
+│   └── app.py                  # Streamlit dashboard (legacy)
 ├── 📁 episodes/                # Tutorial episodes
 │   ├── ep01_foundation/
 │   ├── ep02_first_plugin/
@@ -257,6 +280,8 @@ careerpath-ai/
 │   ├── ep05_planning/
 │   ├── ep06_multi_agent/
 │   └── ep07_persistence/
+├── Dockerfile                  # 🆕 Backend container definition
+├── .dockerignore               # 🆕 Docker build exclusions
 ├── requirements.txt
 ├── startup.sh
 └── README.md
@@ -269,6 +294,8 @@ careerpath-ai/
 ### Prerequisites
 - Python 3.13+
 - Node.js 18+
+- Docker Desktop (for deployment)
+- Azure CLI (for deployment)
 - Azure OpenAI API access
 - Supabase account
 - Azure Cosmos DB account (optional)
@@ -320,6 +347,98 @@ COSMOS_KEY=your-cosmos-key
 COSMOS_DATABASE=careerpath
 COSMOS_CONTAINER=analyses
 ```
+
+---
+
+## ☁️ Deployment
+
+### One-Command Azure Deployment
+
+Deploy your entire application to Azure with a single command:
+
+```bash
+cd "/Users/praveen/Desktop/careerpath with auth"
+./deploy/deploy-container-apps.sh
+```
+
+This automatically:
+1. ✅ Creates Azure Container Registry
+2. ✅ Builds & pushes Docker image
+3. ✅ Creates Container Apps environment
+4. ✅ Deploys FastAPI backend with all environment variables
+5. ✅ Builds & deploys Next.js frontend
+6. ✅ Outputs live URLs
+
+### Prerequisites for Deployment
+
+1. **Docker Desktop** - Must be running
+   ```bash
+   open -a Docker
+   ```
+
+2. **Azure CLI** - Must be logged in
+   ```bash
+   az login
+   ```
+
+3. **Environment Variables** - `.env` file with all credentials
+
+### Deployment Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        Azure Cloud                               │
+│                                                                  │
+│  ┌─────────────────────┐      ┌─────────────────────────────┐   │
+│  │ Azure Container Apps│      │  Azure Static Web Apps      │   │
+│  │  (FastAPI Backend)  │◄────►│  (Next.js Frontend)         │   │
+│  │  - Docker Container │ API  │  - ChatGPT-like UI          │   │
+│  │  - Auto-scaling     │      │  - GitHub/Google OAuth      │   │
+│  └─────────────────────┘      └─────────────────────────────┘   │
+│            │                            │                        │
+│            ▼                            ▼                        │
+│  ┌─────────────────────┐      ┌─────────────────────────────┐   │
+│  │ Azure Container     │      │      Supabase Auth          │   │
+│  │ Registry (ACR)      │      │  - GitHub OAuth             │   │
+│  └─────────────────────┘      │  - Google OAuth             │   │
+│            │                  └─────────────────────────────┘   │
+│            ▼                                                     │
+│  ┌─────────────────────┐      ┌─────────────────────────────┐   │
+│  │   Azure OpenAI      │      │    Azure Cosmos DB          │   │
+│  │   (GPT-4o-mini)     │      │    (Analysis History)       │   │
+│  └─────────────────────┘      └─────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Estimated Costs
+
+| Component | Azure Service | Cost |
+|-----------|---------------|------|
+| **Backend API** | Azure Container Apps | Free tier (180k vCPU-sec/month) |
+| **Container Registry** | Azure Container Registry | ~$5/month (Basic) |
+| **Frontend** | Azure Static Web Apps | Free |
+| **Database** | Azure Cosmos DB | ~$0-5/month (serverless) |
+| **AI** | Azure OpenAI | Pay per token |
+
+**Total: ~$5-15/month** for light usage
+
+### Post-Deployment Steps
+
+1. **Update Supabase Redirect URLs**
+   
+   Go to Supabase Dashboard → Authentication → URL Configuration and add:
+   ```
+   https://careerpath-frontend.azurestaticapps.net
+   ```
+
+2. **Test the API**
+   ```bash
+   curl https://careerpath-api.<random>.azurecontainerapps.io/health
+   ```
+
+3. **Visit Your App**
+   
+   Open the frontend URL and login with GitHub/Google!
 
 ---
 
@@ -418,6 +537,20 @@ curl -X POST "http://localhost:8000/api/analyze" \
 
 ### Analysis Results
 *Comprehensive career recommendations from all AI agents*
+
+---
+
+## 📊 User Analytics
+
+### Features
+- **User Engagement Metrics**: Track active users, session durations, and feature usage.
+- **Analysis Trends**: Identify popular career paths and skill gaps.
+- **Real-Time Dashboards**: Visualize user data for actionable insights.
+
+### Implementation
+- **Frontend**: Integrated with Google Analytics for user tracking.
+- **Backend**: Logs API usage and analysis requests.
+- **Database**: Stores anonymized user activity data for trend analysis.
 
 ---
 
