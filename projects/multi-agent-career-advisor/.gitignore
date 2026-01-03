@@ -4,6 +4,14 @@
 .env.production
 .env*.local
 frontend/.env.local
+frontend/.env
+frontend/.env.production
+
+# API Keys and Secrets
+*.pem
+*.key
+secrets.json
+credentials.json
 
 # Python virtual environment
 venv/
@@ -27,12 +35,14 @@ Thumbs.db
 
 # Logs
 *.log
+deploy/*.log
 
 # Node modules (frontend)
 node_modules/
 frontend/node_modules/
 .next/
 frontend/.next/
+frontend/out/
 
 # Local JSON data
 career_memory.json
@@ -40,3 +50,15 @@ career_memory.json
 # Generated files
 *.pdf
 CareerPath_AI_Documentation.pdf
+CareerPath_Documentation.pdf
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Docker
+.docker/
+
+# Azure deployment info (may contain sensitive URLs)
+deploy/deployment-info.txt

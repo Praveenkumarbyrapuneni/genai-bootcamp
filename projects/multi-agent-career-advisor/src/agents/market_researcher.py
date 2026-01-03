@@ -1,13 +1,7 @@
 # src/agents/market_researcher.py
 
 """
-Market Researcher Agent
-
-This agent specializes in:
-- Analyzing job market trends
-- Identifying in-demand skills
-- Tracking salary ranges
-- Finding emerging technologies
+Market Researcher Agent - ROLE-SPECIFIC analysis
 """
 
 from typing import Dict, List
@@ -17,20 +11,10 @@ from .base_agent import BaseAgent
 class MarketResearcherAgent(BaseAgent):
     """
     Specialized agent for job market research.
-    
-    What does it do?
-    - Analyzes job market data
-    - Identifies trending skills
-    - Reports on demand for roles
-    - Provides market insights
-    
-    Think of it as your personal labor market analyst!
+    Provides ROLE-SPECIFIC insights, not generic AI advice.
     """
     
     def __init__(self, kernel):
-        """
-        Initialize Market Researcher agent.
-        """
         super().__init__(
             name="Market Researcher",
             role="Job Market Analyst",
@@ -38,7 +22,6 @@ class MarketResearcherAgent(BaseAgent):
                 "Labor market trends",
                 "Skill demand analysis",
                 "Salary research",
-                "Emerging technologies",
                 "Industry insights"
             ],
             kernel=kernel
@@ -46,126 +29,60 @@ class MarketResearcherAgent(BaseAgent):
     
     
     def get_system_prompt(self) -> str:
-        """
-        System prompt for market researcher.
-        """
         return """
-You are the Market Researcher, an expert job market analyst specializing in GenAI and ML engineering roles.
+You are a BRUTALLY HONEST Market Researcher.
 
-Your expertise:
-- Analyzing job market trends and demand
-- Identifying most sought-after skills
-- Tracking salary ranges and compensation
-- Spotting emerging technologies and frameworks
-- Understanding hiring patterns across companies
+Your job:
+- Analyze job market for SPECIFIC roles
+- Give REAL salary data
+- Be honest about competition
+- Don't give AI/ML advice for non-AI roles
 
-Your analysis style:
-- Data-driven and objective
-- Focus on actionable insights
-- Provide specific examples
-- Include recent trends (last 3-6 months)
-- Highlight both current and emerging demands
-
-When analyzing the market, consider:
-- Geographic variations
-- Company size differences (startup vs enterprise)
-- Experience level requirements
-- Industry-specific trends
-
-Always provide concrete, actionable insights that help job seekers make informed decisions.
+NEVER recommend RAG, Fine-tuning, Vector Databases unless the role SPECIFICALLY requires them.
         """
     
     
-    async def analyze_role_demand(self, role: str, location: str = "remote") -> str:
+    async def analyze_role_specific(self, role: str, required_skills: List[str]) -> str:
         """
-        Analyze demand for a specific role.
-        
-        Args:
-            role: Job role to analyze
-            location: Geographic location or "remote"
-        
-        Returns:
-            Market analysis
+        Analyze market for a SPECIFIC role with its ACTUAL required skills.
         """
         
         query = f"""
-Analyze the current market demand for {role} positions in {location}.
+Analyze the job market for: {role}
+
+REQUIRED SKILLS FOR THIS ROLE (use ONLY these, not AI/ML skills unless listed):
+{', '.join(required_skills)}
 
 Provide:
-1. Overall demand level (high/medium/low)
-2. Number of openings (estimate range)
-3. Growth trend (increasing/stable/decreasing)
-4. Key hiring companies
-5. Typical salary ranges
-6. Geographic hotspots
 
-Be specific and data-oriented.
+## 📊 Market Analysis for {role}
+
+### Demand Level
+[High/Medium/Low and why]
+
+### Salary Ranges (USD)
+- Entry Level: $X - $Y
+- Mid Level: $X - $Y  
+- Senior Level: $X - $Y
+
+### Competition Reality
+[How competitive is this role? Be honest]
+
+### Top Hiring Companies
+[List 5-10 companies hiring for this SPECIFIC role]
+
+### Skills Most Mentioned in Job Postings
+[List the skills from the required skills list that appear most in postings]
+
+### Geographic Hotspots
+[Where are most jobs located?]
+
+DO NOT mention RAG, LLMs, Vector Databases, Fine-tuning unless they are in the required skills list above.
         """
         
         return await self.think(query)
     
     
     async def identify_trending_skills(self, role: str) -> str:
-        """
-        Identify trending skills for a role.
-        
-        Args:
-            role: Target role
-        
-        Returns:
-            Analysis of trending skills
-        """
-        
-        query = f"""
-Identify the most in-demand and trending skills for {role} positions.
-
-Categorize as:
-1. Core skills (must-have)
-2. Highly desired skills (strong advantage)
-3. Emerging skills (future-proofing)
-4. Declining skills (becoming less relevant)
-
-For each skill, explain:
-- Why it's important
-- How common it is in job postings
-- How to learn it
-
-Focus on technical skills, tools, and frameworks.
-        """
-        
-        return await self.think(query)
-    
-    
-    async def compare_role_opportunities(self, roles: List[str]) -> str:
-        """
-        Compare opportunities across multiple roles.
-        
-        Args:
-            roles: List of roles to compare
-        
-        Returns:
-            Comparative analysis
-        """
-        
-        roles_str = ", ".join(roles)
-        
-        query = f"""
-Compare market opportunities for these roles: {roles_str}
-
-For each role, analyze:
-1. Number of openings
-2. Average salary range
-3. Growth trajectory
-4. Entry barriers (experience/education)
-5. Career progression potential
-
-Provide a clear comparison table and recommend which role offers:
-- Most opportunities
-- Best compensation
-- Fastest growth
-- Easiest entry
-
-Help the job seeker make an informed choice.
-        """
-        
-        return await self.think(query)
+        """Legacy method - kept for compatibility"""
+        return await self.analyze_role_specific(role, [])
