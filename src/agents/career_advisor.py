@@ -352,90 +352,33 @@ Be SPECIFIC. Quote from the resume. Don't be generic.
         timeframe: str,
         required_skills: List[str]
     ) -> str:
-        """Create a DEEP resume-based analysis like ChatGPT."""
+        """Create a DEEP resume-based analysis like ChatGPT using Groq for speed."""
         
-        prompt = f"""
-You are analyzing a resume for someone who wants to become a {target_role} in {timeframe}.
-
-READ THIS RESUME CAREFULLY - EVERY WORD:
----
-{resume_text}
----
-
-REQUIRED SKILLS FOR {target_role.upper()}:
-{', '.join(required_skills)}
-
-Now give a BRUTALLY HONEST analysis. Structure your response EXACTLY like this:
-
-## 🔍 DEEP RESUME ANALYSIS
-
-### 📋 What I Found in Your Resume:
-
-**Work Experience:**
-[Summarize their experience. How many years? What companies? What did they ACTUALLY do?]
-
-**Projects:**
-[List their projects. Are they impressive? Relevant? Complex enough?]
-
-**Education:**
-[Their degree, university. Is it sufficient?]
-
-**Skills Mentioned:**
-[What skills did you find in their resume?]
-
----
-
-## 🚨 REALITY CHECK for {target_role}
-
-### Your Readiness Score: [X]%
-[Calculate based on their FULL resume - experience + projects + skills + education]
-
-### ✅ What's Working FOR You:
-[List specific strengths FROM their resume - quote specific experience/projects]
-- [Strength 1 - be specific, reference their resume]
-- [Strength 2]
-- [Strength 3]
-
-### ❌ What's Working AGAINST You:
-[Be brutally honest about weaknesses]
-- [Weakness 1 - missing experience, weak projects, etc.]
-- [Weakness 2]
-- [Weakness 3]
-
-### 🎯 Experience Gap Analysis:
-[Compare their experience to what {target_role} positions typically require]
-- Years of experience needed vs what they have
-- Type of experience needed vs what they have
-- Missing domain knowledge
-
-### 📊 Project Assessment:
-[Evaluate their projects specifically]
-- Are their projects complex enough for {target_role}?
-- What types of projects are they missing?
-- Specific project ideas they should build
-
-### ⏰ Is {timeframe} Realistic?
-[Based on their CURRENT resume, can they be ready in {timeframe}?]
-
-### 📋 Specific Action Items:
-[NOT generic advice - specific to THEIR resume]
-1. [Action 1 - reference what they're missing]
-2. [Action 2]
-3. [Action 3]
-4. [Action 4]
-5. [Action 5]
-
-### 💡 Bottom Line:
-[One paragraph of brutal honesty. Reference their specific background. Don't be generic.]
-
-IMPORTANT:
-- Quote specific things from their resume
-- Don't give generic advice
-- Be honest about their weaknesses
-- Compare to what recruiters actually want
-        """
+        from src.groq_client import get_groq_client
         
-        return await self.think(prompt, {})
+        groq_client = get_groq_client()
+        
+        system_prompt = """You are a BRUTALLY HONEST Career Advisor. You analyze resumes deeply and give reality checks, not motivational speeches. Be specific, quote from resumes, and be direct about weaknesses."""
+        
+        user_prompt = f"""Analyze this resume for {target_role} in {timeframe}.
+
+RESUME:
+---
+{resume_text[:3000]}
+---
+
+REQUIRED SKILLS: {', '.join(required_skills)}
+
+Give a BRUTALLY HONEST analysis with:
+1. What you found in their resume (experience, projects, education, skills)
+2. Readiness score (0-100%)
+3. Strengths and weaknesses (be specific)
+4. Is {timeframe} realistic?
+5. Specific action items
+
+Be direct and honest."""
+        
+        return await groq_client.get_completion(user_prompt, system_prompt, max_tokens=3000)
     
     
     async def _create_market_fit_analysis(
@@ -444,50 +387,33 @@ IMPORTANT:
         target_role: str,
         required_skills: List[str]
     ) -> str:
-        """Analyze how the candidate fits the market based on their resume."""
+        """Analyze how the candidate fits the market based on their resume using Groq."""
         
-        prompt = f"""
-Analyze how this candidate's resume compares to market requirements for {target_role}.
+        from src.groq_client import get_groq_client
+        
+        groq_client = get_groq_client()
+        
+        system_prompt = """You are a career market analyst. Analyze how candidates compare to market requirements and be honest about their competitive position."""
+        
+        user_prompt = f"""Analyze market fit for {target_role}.
 
 RESUME:
 ---
-{resume_text}
+{resume_text[:2000]}
 ---
 
-REQUIRED SKILLS FOR {target_role}:
-{', '.join(required_skills)}
+REQUIRED SKILLS: {', '.join(required_skills)}
 
 Provide:
+1. How they compare to other candidates
+2. What recruiters want vs what they have (experience, projects, skills, education)
+3. Companies they could target (FAANG, Big Tech, Mid-size, Startups)
+4. Their competitive position
+5. Realistic salary expectations
 
-## 📊 Market Fit Analysis
-
-### How You Compare to Other Candidates:
-[Based on their resume, how do they stack up?]
-
-### What Recruiters Look For vs What You Have:
-
-| Requirement | What Recruiters Want | What You Have | Gap |
-|-------------|---------------------|---------------|-----|
-| Experience | [X years] | [Their years] | [Gap] |
-| Projects | [Type needed] | [Their projects] | [Gap] |
-| Skills | [Key skills] | [Their skills] | [Gap] |
-| Education | [Typical requirement] | [Their education] | [Gap] |
-
-### Companies You Could Target:
-[Based on their current profile]
-- Tier 1 (FAANG): [Ready/Not Ready - why]
-- Tier 2 (Big Tech): [Ready/Not Ready - why]
-- Tier 3 (Mid-size): [Ready/Not Ready - why]
-- Startups: [Ready/Not Ready - why]
-
-### Your Competitive Position:
-[Honest assessment of where they stand in the job market]
-
-### Salary Expectations (Realistic):
-[Based on their actual experience level]
-        """
+Be honest and specific."""
         
-        return await self.think(prompt, {})
+        return await groq_client.get_completion(user_prompt, system_prompt, max_tokens=2000)
     
     
     async def _create_personalized_learning_plan(
@@ -497,55 +423,32 @@ Provide:
         timeframe: str,
         timeframe_months: int
     ) -> str:
-        """Create a learning plan based on resume gaps."""
+        """Create a learning plan based on resume gaps using Groq."""
         
-        prompt = f"""
-Based on this resume, create a PERSONALIZED learning plan for {target_role} in {timeframe}.
+        from src.groq_client import get_groq_client
+        
+        groq_client = get_groq_client()
+        
+        system_prompt = """You are a learning plan expert. Create personalized, actionable learning paths based on resume gaps."""
+        
+        user_prompt = f"""Create a learning plan for {target_role} in {timeframe}.
 
 RESUME:
 ---
-{resume_text}
+{resume_text[:2000]}
 ---
 
-Analyze what they already know (from their resume) and what they need to learn.
+Based on their resume:
+1. What they already know (don't make them relearn)
+2. What they need to learn (gaps)
+3. Priority learning path (Phase 1, 2, 3)
+4. Specific projects to build
+5. Weekly time commitment
+6. Is {timeframe} realistic?
 
-## 📚 Personalized Learning Plan
-
-### What You Already Know (from your resume):
-[List skills/experience they already have - don't make them relearn these]
-
-### What You Need to Learn (Gaps):
-[Based on their resume, what's missing for {target_role}?]
-
-### Priority Learning Path:
-
-#### Phase 1: Critical Gaps (First {timeframe_months // 3 or 1} months)
-[Most important skills they're missing]
-- Skill 1: [Why it's critical] - Resources: [Specific courses/books]
-- Skill 2: ...
-
-#### Phase 2: Experience Building (Next {timeframe_months // 3 or 1} months)
-[Projects they need to build - based on what's MISSING from their resume]
-- Project 1: [Description] - This fills the gap of: [What gap]
-- Project 2: ...
-
-#### Phase 3: Polish & Apply (Final stretch)
-[Interview prep, portfolio, applications]
-
-### Projects You MUST Build:
-[Specific to their gaps - not generic projects]
-1. [Project name]: [Description] - This proves you can [skill]
-2. [Project name]: [Description]
-3. [Project name]: [Description]
-
-### Weekly Time Commitment:
-[Realistic hours based on how much they need to learn]
-
-### Realistic Timeline:
-[Is {timeframe} enough? If not, what's realistic?]
-        """
+Be specific to their gaps."""
         
-        return await self.think(prompt, {})
+        return await groq_client.get_completion(user_prompt, system_prompt, max_tokens=2500)
     
     
     async def _create_application_readiness(
@@ -554,63 +457,34 @@ Analyze what they already know (from their resume) and what they need to learn.
         target_role: str,
         timeframe: str
     ) -> str:
-        """Assess application readiness based on resume."""
+        """Assess application readiness based on resume using Groq."""
         
-        prompt = f"""
-Based on this resume, assess if they're ready to apply for {target_role} positions.
+        from src.groq_client import get_groq_client
+        
+        groq_client = get_groq_client()
+        
+        system_prompt = """You are an application readiness coach. Assess if candidates are ready to apply and give honest feedback on their resume."""
+        
+        user_prompt = f"""Assess application readiness for {target_role}.
 
 RESUME:
 ---
-{resume_text}
+{resume_text[:2000]}
 ---
 
-## 📝 Application Readiness Assessment
+Provide:
+1. Should they apply now? (Yes/No/Maybe - why)
+2. Resume strengths (keep these)
+3. Resume weaknesses (fix these)
+4. Resume improvement suggestions
+5. Interview readiness (what they'll struggle with)
+6. When to start applying
+7. Callback rate prediction
+8. Priority action plan
 
-### Should You Apply NOW?
-[Yes/No/Maybe - with explanation based on their resume]
-
-### Resume Strengths (Keep These):
-[What's good in their resume that they should highlight]
-
-### Resume Weaknesses (Fix These):
-[What's weak or missing]
-
-### Resume Improvement Suggestions:
-[Specific changes to their resume]
-1. [Suggestion 1]
-2. [Suggestion 2]
-3. [Suggestion 3]
-
-### Interview Readiness:
-Based on your resume, here's what interviewers will likely ask:
-- [Topic 1]: Are you ready? [Yes/No/Needs work]
-- [Topic 2]: Are you ready? [Yes/No/Needs work]
-- [Topic 3]: Are you ready? [Yes/No/Needs work]
-
-### Questions You'll Struggle With:
-[Based on gaps in their resume]
-1. [Question] - Why you'll struggle: [Reason]
-2. [Question] - Why you'll struggle: [Reason]
-
-### When to Start Applying:
-[Based on their current state]
-- Apply now to: [Types of companies]
-- Wait X months for: [Types of companies]
-- Need X more experience for: [Types of companies]
-
-### Your Callback Rate Prediction:
-[Based on their resume quality]
-- Current state: ~X% callback rate
-- After improvements: ~X% callback rate
-
-### Action Plan:
-[Prioritized list]
-1. [First priority]
-2. [Second priority]
-3. [Third priority]
-        """
+Be honest based on their resume."""
         
-        return await self.think(prompt, {})
+        return await groq_client.get_completion(user_prompt, system_prompt, max_tokens=2000)
     
     
     async def _create_skills_based_reality_check(
@@ -623,44 +497,31 @@ Based on your resume, here's what interviewers will likely ask:
         readiness_score: int,
         timeframe: str
     ) -> str:
-        """Fallback: Create reality check based on skills only (no resume)."""
+        """Create reality check based on skills only (no resume) using Groq."""
         
-        prompt = f"""
-Give a REALITY CHECK for someone targeting {target_role} in {timeframe}.
+        from src.groq_client import get_groq_client
+        
+        groq_client = get_groq_client()
+        
+        system_prompt = """You are a career advisor. Give honest reality checks based on skills."""
+        
+        user_prompt = f"""Reality check for {target_role} in {timeframe}.
 
-NOTE: No resume was provided, so this is based on skills only.
+NOTE: No resume provided - skills-based analysis only.
 
-THEIR SKILLS: {', '.join(current_skills) if current_skills else 'None specified'}
-REQUIRED FOR {target_role}: {', '.join(required_skills)}
-SKILLS THEY HAVE: {', '.join(matched_skills) if matched_skills else 'None'}
-SKILLS MISSING: {', '.join(skill_gaps) if skill_gaps else 'None'}
+THEIR SKILLS: {', '.join(current_skills) if current_skills else 'None'}
+REQUIRED: {', '.join(required_skills)}
+MATCHED: {', '.join(matched_skills) if matched_skills else 'None'}
+MISSING: {', '.join(skill_gaps) if skill_gaps else 'None'}
 READINESS: {readiness_score}%
 
-## 🚨 REALITY CHECK (Skills-Based)
+Provide:
+1. Readiness explanation
+2. Skills they have vs need
+3. Is {timeframe} realistic?
+4. What they need to do
+5. Honest bottom line
 
-### ⚠️ Limited Analysis
-No resume was uploaded, so this analysis is based only on the skills you selected.
-**For a complete analysis, please upload your resume.**
-
-### Your Readiness: {readiness_score}%
-[Explain what this means]
-
-### ✅ Skills You Have ({len(matched_skills)}/{len(required_skills)}):
-{chr(10).join(f'- {s}' for s in matched_skills) if matched_skills else '- None of the required skills'}
-
-### ❌ Skills You're Missing ({len(skill_gaps)}/{len(required_skills)}):
-{chr(10).join(f'- {s}' for s in skill_gaps) if skill_gaps else '- None! You have all required skills.'}
-
-### ⏰ Is {timeframe} Realistic?
-[Based on skill gaps]
-
-### 📋 What You Need to Do:
-[Specific actions for each missing skill]
-
-### 💡 Bottom Line:
-[Honest assessment]
-
-**TIP: Upload your resume for a much more detailed and personalized analysis!**
-        """
+Remind them to upload resume for better analysis."""
         
-        return await self.think(prompt, {})
+        return await groq_client.get_completion(user_prompt, system_prompt, max_tokens=1500)

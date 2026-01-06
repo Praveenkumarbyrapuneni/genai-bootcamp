@@ -114,3 +114,4 @@ zipp==3.23.0
 supabase==2.11.0
 uvicorn==0.34.0
 python-multipart==0.0.20
+groq
