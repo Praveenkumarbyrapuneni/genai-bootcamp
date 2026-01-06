@@ -5,9 +5,9 @@ FastAPI Backend for CareerPath AI
 Connects the Next.js frontend with the Python AI agents.
 """
 
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Header
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from typing import Optional
 import sys
 import os
@@ -44,6 +44,39 @@ class AnalysisRequest(BaseModel):
     timeframe_months: int = 6
     timeframe_display: Optional[str] = None  # e.g., "1 day", "6 months", "2 years"
     resume_text: Optional[str] = None
+    
+    @field_validator('target_role')
+    @classmethod
+    def validate_target_role(cls, v: str) -> str:
+        """Validate that target_role is a meaningful job role."""
+        v = v.strip()
+        if not v:
+            raise ValueError("Target role cannot be empty")
+        
+        # Check if it's too short or looks like gibberish
+        if len(v) < 3:
+            raise ValueError("Target role must be at least 3 characters")
+        
+        # Check for common test inputs
+        invalid_inputs = ['hello', 'hi', 'test', 'testing', 'hey', 'yo', 'sup']
+        if v.lower() in invalid_inputs:
+            raise ValueError(
+                f"'{v}' is not a valid job role. Please enter a real career position "
+                "(e.g., 'Data Analyst', 'Software Engineer', 'Product Manager')"
+            )
+        
+        return v
+
+
+class BulkDeleteRequest(BaseModel):
+    ids: list[str]
+    user_id: str
+
+
+class BulkArchiveRequest(BaseModel):
+    ids: list[str]
+    user_id: str
+    is_archived: bool
 
 
 class AnalysisResponse(BaseModel):
@@ -111,6 +144,9 @@ async def analyze_career(request: AnalysisRequest):
             application_strategy=results.get("application_strategy", "No strategy available.")
         )
         
+    except ValueError as ve:
+        # Validation error - return 400 Bad Request
+        raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
         print(f"Analysis error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -206,19 +242,90 @@ def extract_skills_from_resume(text: str) -> list[str]:
 
 
 @app.get("/api/history/{user_id}")
-async def get_history(user_id: str):
+async def get_history(user_id: str, include_archived: bool = False):
     """
     Get analysis history for a user.
+    Filters out deleted records by default.
+    Optionally includes archived records.
     """
     try:
         db_manager = CareerDataManager()
-        history = db_manager.get_user_history(user_id)
+        history = db_manager.get_user_history(user_id, include_archived=include_archived)
         return {"history": history}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# Add new endpoints for analytics
+@app.post("/api/history/bulk-delete")
+async def bulk_delete_history(request: BulkDeleteRequest):
+    """
+    Soft delete multiple analysis records.
+    Verifies ownership before deleting.
+    
+    Security: Validates that all records belong to the requesting user.
+    """
+    try:
+        if not request.ids:
+            raise HTTPException(status_code=400, detail="No IDs provided")
+        
+        if len(request.ids) > 100:
+            raise HTTPException(status_code=400, detail="Cannot delete more than 100 items at once")
+        
+        db_manager = CareerDataManager()
+        result = db_manager.bulk_delete(request.ids, request.user_id)
+        
+        return {
+            "success": True,
+            "updated": result["updated"],
+            "failed": result["failed"],
+            "failed_ids": result["failed_ids"],
+            "message": f"Deleted {result['updated']} item(s)" + 
+                      (f", {result['failed']} failed" if result['failed'] > 0 else "")
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Bulk delete error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/history/bulk-archive")
+async def bulk_archive_history(request: BulkArchiveRequest):
+    """
+    Archive or unarchive multiple analysis records.
+    Verifies ownership before updating.
+    
+    Security: Validates that all records belong to the requesting user.
+    """
+    try:
+        if not request.ids:
+            raise HTTPException(status_code=400, detail="No IDs provided")
+        
+        if len(request.ids) > 100:
+            raise HTTPException(status_code=400, detail="Cannot archive more than 100 items at once")
+        
+        db_manager = CareerDataManager()
+        result = db_manager.bulk_archive(request.ids, request.user_id, request.is_archived)
+        
+        action = "archived" if request.is_archived else "unarchived"
+        
+        return {
+            "success": True,
+            "updated": result["updated"],
+            "failed": result["failed"],
+            "failed_ids": result["failed_ids"],
+            "message": f"{action.capitalize()} {result['updated']} item(s)" + 
+                      (f", {result['failed']} failed" if result['failed'] > 0 else "")
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Bulk archive error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/api/analytics/searches")
 async def get_all_searches(limit: int = 100):
     """Get all user searches (admin endpoint)."""
