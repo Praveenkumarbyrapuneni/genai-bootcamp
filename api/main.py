@@ -90,15 +90,24 @@ async def analyze_career(request: AnalysisRequest):
     Run comprehensive career analysis using AI agents.
     """
     try:
-        # Validation happens automatically via Pydantic before we get here
-        # But let's add an explicit check for better error messages
-        if not request.target_role or len(request.target_role.strip()) < 3:
+        # Quick validation
+        if not request.target_role or len(request.target_role.strip()) < 1:
             raise HTTPException(
                 status_code=400, 
-                detail="Please enter a valid job role (at least 3 characters)"
+                detail="Please enter a message or career goal"
             )
         
-        # Initialize the AI system ONLY AFTER validation passes
+        # For simple conversational inputs, return a quick response without AI
+        simple_inputs = ['hello', 'hi', 'hey', 'test', 'testing']
+        if request.target_role.lower().strip() in simple_inputs:
+            return AnalysisResponse(
+                final_recommendations=f"Hello! 👋 I'm CareerPath AI, your career advisor.\n\nI can help you with:\n- Career path analysis\n- Skills gap assessment\n- Learning roadmaps\n- Job market insights\n\nTo get started, tell me about your target role (e.g., 'Data Analyst', 'Software Engineer') and your current skills!",
+                market_research="I'm ready to analyze market trends for any role you're interested in.",
+                learning_plan="Share your target role and current skills to get a personalized learning plan.",
+                application_strategy="Let me know your career goals and I'll help you create an application strategy."
+            )
+        
+        # Initialize the AI system ONLY for actual career queries
         kernel = create_kernel()
         advisor = CareerAdvisorAgent(kernel)
         
