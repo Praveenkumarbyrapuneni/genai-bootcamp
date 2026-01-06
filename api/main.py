@@ -107,29 +107,65 @@ async def analyze_career(request: AnalysisRequest):
                 application_strategy="Let me know your career goals and I'll help you create an application strategy."
             )
         
-        # Initialize the AI system ONLY for actual career queries
-        kernel = create_kernel()
-        advisor = CareerAdvisorAgent(kernel)
+        # Use Groq directly for fast responses
+        from src.groq_client import get_groq_client
+        groq = get_groq_client()
+        
+        # Build the analysis prompt
+        resume_info = f"\n\nRESUME:\n{request.resume_text[:2000]}" if request.resume_text else ""
+        skills_info = f"\n\nCURRENT SKILLS: {', '.join(request.current_skills)}" if request.current_skills else ""
+        
+        prompt = f"""You are a brutally honest career advisor. Analyze this person's career goals.
+
+TARGET ROLE: {request.target_role}
+TIMEFRAME: {request.timeframe_display or f'{request.timeframe_months} months'}{skills_info}{resume_info}
+
+Provide a detailed analysis with:
+1. Reality Check - honest assessment of readiness (0-100%)
+2. Strengths and weaknesses
+3. What they need to learn
+4. Timeline feasibility
+5. Specific action items
+
+Be direct and honest."""
+
+        # Get AI response
+        final_recommendations = await groq.get_completion(
+            prompt=prompt,
+            system_prompt="You are a brutally honest career advisor. Give reality checks, not motivational speeches.",
+            max_tokens=2000
+        )
+        
+        # Generate other sections
+        market_prompt = f"Analyze the job market for {request.target_role}. Include: demand, salary range, required skills, and company types hiring."
+        market_research = await groq.get_completion(market_prompt, max_tokens=1500)
+        
+        learning_prompt = f"Create a {request.timeframe_display or f'{request.timeframe_months} month'} learning plan for becoming a {request.target_role}."
+        learning_plan = await groq.get_completion(learning_prompt, max_tokens=1500)
+        
+        strategy_prompt = f"What's the application strategy for {request.target_role}? When to apply, where to apply, resume tips."
+        application_strategy = await groq.get_completion(strategy_prompt, max_tokens=1500)
+        
+        results = {
+            "final_recommendations": final_recommendations,
+            "market_research": market_research,
+            "learning_plan": learning_plan,
+            "application_strategy": application_strategy
+        }
         
         # Log the search to Supabase
-        tracker = get_tracker()
-        tracker.log_search(
-            user_id=request.user_id,
-            user_email=request.user_email,
-            target_role=request.target_role,
-            current_skills=request.current_skills,
-            timeframe=request.timeframe_display or f"{request.timeframe_months} months",
-            resume_uploaded=bool(request.resume_text)
-        )
-        
-        # Run analysis with timeframe display
-        results = await advisor.comprehensive_career_analysis(
-            target_role=request.target_role,
-            current_skills=request.current_skills,
-            timeframe_months=request.timeframe_months,
-            timeframe_display=request.timeframe_display or f"{request.timeframe_months} months",
-            resume_text=request.resume_text or None
-        )
+        try:
+            tracker = get_tracker()
+            tracker.log_search(
+                user_id=request.user_id,
+                user_email=request.user_email,
+                target_role=request.target_role,
+                current_skills=request.current_skills,
+                timeframe=request.timeframe_display or f"{request.timeframe_months} months",
+                resume_uploaded=bool(request.resume_text)
+            )
+        except Exception as track_error:
+            print(f"Tracking error (non-critical): {track_error}")
         
         # Save to database
         try:
@@ -157,7 +193,7 @@ async def analyze_career(request: AnalysisRequest):
         raise
     except Exception as e:
         print(f"Analysis error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
 
 @app.post("/api/parse-resume")
