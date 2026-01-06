@@ -102,6 +102,18 @@ async def analyze_career(request: AnalysisRequest):
     Run comprehensive career analysis using AI agents.
     """
     try:
+        # Validation happens automatically via Pydantic before we get here
+        # But let's add an explicit check for better error messages
+        if not request.target_role or len(request.target_role.strip()) < 3:
+            raise HTTPException(
+                status_code=400, 
+                detail="Please enter a valid job role (at least 3 characters)"
+            )
+        
+        # Initialize the AI system ONLY AFTER validation passes
+        kernel = create_kernel()
+        advisor = CareerAdvisorAgent(kernel)
+        
         # Log the search to Supabase
         tracker = get_tracker()
         tracker.log_search(
@@ -112,10 +124,6 @@ async def analyze_career(request: AnalysisRequest):
             timeframe=request.timeframe_display or f"{request.timeframe_months} months",
             resume_uploaded=bool(request.resume_text)
         )
-        
-        # Initialize the AI system
-        kernel = create_kernel()
-        advisor = CareerAdvisorAgent(kernel)
         
         # Run analysis with timeframe display
         results = await advisor.comprehensive_career_analysis(
@@ -145,8 +153,11 @@ async def analyze_career(request: AnalysisRequest):
         )
         
     except ValueError as ve:
-        # Validation error - return 400 Bad Request
+        # Validation error from Pydantic - return 400 Bad Request
         raise HTTPException(status_code=400, detail=str(ve))
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
     except Exception as e:
         print(f"Analysis error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
