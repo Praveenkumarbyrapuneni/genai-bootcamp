@@ -520,7 +520,6 @@ export default function Dashboard({ user }: DashboardProps) {
   const [recentChats, setRecentChats] = useState<{id: number, title: string, results?: any}[]>([]);
   const [hoveredChat, setHoveredChat] = useState<number | null>(null);
   const [currentChatId, setCurrentChatId] = useState<number | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Helper function to get timeframe display text
   const getTimeframeDisplay = () => {
@@ -1021,7 +1020,6 @@ ${analysis.resumeScore >= 60 ? "- FAANG if that's your goal" : "- Any competitiv
     
     setLoading(true);
     setResults(null);
-    setErrorMessage(null);
 
     const chatId = Date.now();
     setCurrentChatId(chatId);
@@ -1042,16 +1040,6 @@ ${analysis.resumeScore >= 60 ? "- FAANG if that's your goal" : "- Any competitiv
         }),
       });
 
-      // Check for validation errors (400 status)
-      if (response.status === 400) {
-        const errorData = await response.json();
-        // Extract the validation error message
-        const validationError = errorData.detail?.[0]?.msg || errorData.detail || "Invalid input";
-        setErrorMessage(validationError);
-        setLoading(false);
-        return; // Stop here - don't generate mock results
-      }
-
       if (!response.ok) {
         throw new Error("Analysis failed");
       }
@@ -1065,9 +1053,7 @@ ${analysis.resumeScore >= 60 ? "- FAANG if that's your goal" : "- Any competitiv
       
     } catch (error) {
       console.error("Error:", error);
-      
-      // Only show network/server errors, not validation errors
-      setErrorMessage("Unable to connect to the server. Please try again later.");
+      alert("Unable to analyze. Please try again.");
       
     } finally {
       setLoading(false);
@@ -1476,11 +1462,6 @@ ${analysis.resumeScore >= 60 ? "- FAANG if that's your goal" : "- Any competitiv
             <p className="mt-2 text-xs text-center text-gray-400">
               Brutally honest career advice. No sugar-coating.
             </p>
-            {errorMessage && (
-              <p className="mt-2 text-xs text-center text-red-500">
-                {errorMessage}
-              </p>
-            )}
           </div>
         </div>
       </div>

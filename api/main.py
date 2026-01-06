@@ -48,22 +48,10 @@ class AnalysisRequest(BaseModel):
     @field_validator('target_role')
     @classmethod
     def validate_target_role(cls, v: str) -> str:
-        """Validate that target_role is a meaningful job role."""
+        """Validate that target_role is not empty."""
         v = v.strip()
         if not v:
-            raise ValueError("Target role cannot be empty")
-        
-        # Check if it's too short or looks like gibberish
-        if len(v) < 3:
-            raise ValueError("Target role must be at least 3 characters")
-        
-        # Check for common test inputs
-        invalid_inputs = ['hello', 'hi', 'test', 'testing', 'hey', 'yo', 'sup']
-        if v.lower() in invalid_inputs:
-            raise ValueError(
-                f"'{v}' is not a valid job role. Please enter a real career position "
-                "(e.g., 'Data Analyst', 'Software Engineer', 'Product Manager')"
-            )
+            raise ValueError("Please enter a message or career goal")
         
         return v
 
