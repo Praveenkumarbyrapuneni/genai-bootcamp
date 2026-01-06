@@ -15,8 +15,7 @@ import os
 # Add parent directory to path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from src.kernel_config import create_kernel
-from src.agents.career_advisor import CareerAdvisorAgent
+# Import only what we need - removed Semantic Kernel imports
 from src.database.cosmos_manager import CareerDataManager
 from src.database.supabase_tracker import get_tracker
 
