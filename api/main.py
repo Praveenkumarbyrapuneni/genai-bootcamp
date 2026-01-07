@@ -106,9 +106,9 @@ async def analyze_career(request: AnalysisRequest):
                 application_strategy="Let me know your career goals and I'll help you create an application strategy."
             )
         
-        # Use Groq directly for fast responses
-        from src.groq_client import get_groq_client
-        groq = get_groq_client()
+        # Use OpenAI for fast, reliable responses
+        from src.openai_client import get_openai_client
+        ai_client = get_openai_client()
         
         # Build the analysis prompt
         resume_info = f"\n\nRESUME:\n{request.resume_text[:2000]}" if request.resume_text else ""
@@ -129,7 +129,7 @@ Provide a detailed analysis with:
 Be direct and honest."""
 
         # Get AI response
-        final_recommendations = await groq.get_completion(
+        final_recommendations = await ai_client.get_completion(
             prompt=prompt,
             system_prompt="You are a brutally honest career advisor. Give reality checks, not motivational speeches.",
             max_tokens=2000
@@ -137,13 +137,13 @@ Be direct and honest."""
         
         # Generate other sections
         market_prompt = f"Analyze the job market for {request.target_role}. Include: demand, salary range, required skills, and company types hiring."
-        market_research = await groq.get_completion(market_prompt, max_tokens=1500)
+        market_research = await ai_client.get_completion(market_prompt, max_tokens=1500)
         
         learning_prompt = f"Create a {request.timeframe_display or f'{request.timeframe_months} month'} learning plan for becoming a {request.target_role}."
-        learning_plan = await groq.get_completion(learning_prompt, max_tokens=1500)
+        learning_plan = await ai_client.get_completion(learning_prompt, max_tokens=1500)
         
         strategy_prompt = f"What's the application strategy for {request.target_role}? When to apply, where to apply, resume tips."
-        application_strategy = await groq.get_completion(strategy_prompt, max_tokens=1500)
+        application_strategy = await ai_client.get_completion(strategy_prompt, max_tokens=1500)
         
         results = {
             "final_recommendations": final_recommendations,
